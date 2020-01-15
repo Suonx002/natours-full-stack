@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
-const app = require('./app');
-
-const keys = require('./config/keys');
+const dotenv = require('dotenv');
 
 process.on('uncaughtException', err => {
   console.log('UNCAUGHT EXCEPTION! 💥 Shutting down...');
@@ -9,28 +7,26 @@ process.on('uncaughtException', err => {
   process.exit(1);
 });
 
-// connect to database
-const connectDB = async () => {
-  try {
-    await mongoose.connect(keys.mongoURI, {
-      useUnifiedTopology: true,
-      useNewUrlParser: true,
-      useCreateIndex: true,
-      useFindAndModify: false
-    });
+dotenv.config({ path: './config.env' });
+const app = require('./app');
 
-    console.log('MongoDB Connected ...');
-  } catch (err) {
-    console.error(err.message);
-    process.exit(1);
-  }
-};
-connectDB();
+const DB = process.env.DATABASE.replace(
+  '<PASSWORD>',
+  process.env.DATABASE_PASSWORD
+);
 
-const PORT = process.env.PORT || 5000;
+mongoose
+  .connect(DB, {
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    useFindAndModify: false,
+    useUnifiedTopology: true
+  })
+  .then(() => console.log('DB connection successful!'));
 
-app.listen(PORT, () => {
-  console.log(`Server is currently running on port ${PORT}...`);
+const port = process.env.PORT || 3000;
+const server = app.listen(port, () => {
+  console.log(`App running on port ${port}...`);
 });
 
 process.on('unhandledRejection', err => {
